@@ -13,7 +13,7 @@ public static class SettingsExtensions
 
     private static IConfigurationBuilder UseSettings(this IConfigurationBuilder config)
     {
-        config.SetBasePath(Directory.GetCurrentDirectory());
+        config.SetBasePath(System.AppDomain.CurrentDomain.BaseDirectory);
 
         config.AddJsonFile($"{_appSettingsFileName}{_appSettingsFileExtension}", false, true);
 
