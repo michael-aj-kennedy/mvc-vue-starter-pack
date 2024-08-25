@@ -1,0 +1,17 @@
+﻿@{
+    ViewBag.Title = "About";
+}
+
+<div id="app-about" class="jumbotron">
+    <div class="container">
+        <h2>@ViewBag.Title.</h2>
+        <h3>@ViewBag.Message</h3>
+        <p>{{ anotherMessage }}</p>
+    </div>
+
+</div>
+
+@section scripts
+{
+    @Html.ImportPageJs("about.js")
+}
