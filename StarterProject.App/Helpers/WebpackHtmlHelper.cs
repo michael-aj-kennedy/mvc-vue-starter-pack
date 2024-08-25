@@ -8,7 +8,7 @@ public static class WebpackHtmlHelper
 {
     public static readonly string JsBuildPath = "/resources/responsive/js-build/app/";
 
-    public static IHtmlContent ImportPageJs(this IHtmlHelper<dynamic> helper, string jsFile, object options = null, string className = null)
+    public static IHtmlContent ImportPageJs(this IHtmlHelper helper, string jsFile, object options = null, string className = null)
     {
         return helper.Raw(BuildImportScript(helper, jsFile, options, className));
     }
