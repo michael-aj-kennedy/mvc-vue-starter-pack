@@ -1,5 +1,4 @@
-﻿using StarterProject.App.Helpers;
-using StarterProject.Shared;
+﻿using StarterProject.Shared;
 using SimpleInjector;
 
 namespace StarterProject.App;
