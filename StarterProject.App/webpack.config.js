@@ -21,7 +21,9 @@ fs.readdirSync(srcPath).forEach((name) => {
 });
 
 module.exports = {
-    mode: "development",
+    mode: "development", // set to production for release
+    devtool: "source-map", // remove, or set to "yes" for prod release
+
     entry: entries, // Our entry object that contains all entries found
     output: {
         path: path.resolve(__dirname, "./wwwroot/dist"), // output directory
