@@ -1,6 +1,7 @@
 using JSNLog;
 using Serilog;
 using SimpleInjector;
+using StarterProject.App.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,10 +33,12 @@ builder.Services.AddSimpleInjector(container, options =>
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
-var app = builder.Build();
+// configuration
+builder.Configuration
+    .AddJsonFile("appsettings.json", true, true)
+    .AddEnvironmentVariables();
 
-//Add support to logging request with SERILOG
-app.UseSerilogRequestLogging();
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -45,29 +48,45 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// configuration
-builder.Configuration
-    .AddJsonFile("appsettings.json", true, true)
-    .AddEnvironmentVariables();
+// Add support to logging request with SERILOG
+app.UseSerilogRequestLogging();
+
+// Configure JSNLog
+var jsnlogConfiguration = new JsnlogConfiguration
+{
+    ajaxAppenders = new List<AjaxAppender> {
+            new AjaxAppender {
+                name = "appender1",
+                storeInBufferLevel = "TRACE", // Log messages with severity smaller than TRACE are ignored
+                level = "WARN", // Log messages with severity equal or greater than TRACE and lower than WARN are stored in the internal buffer, but not sent to the server
+                                // Log messages with severity equal or greater than WARN and lower than FATAL are sent to the server on their own
+                sendWithBufferLevel = "FATAL", // Log messages with severity equal or greater than FATAL are sent to the server, along with all messages stored in the internal buffer
+                bufferSize = 20, // Stores the last up to 20 debug messages in browser memory,
+                batchSize = 20,
+                batchTimeout = 2000, // Logs are guaranteed to be sent within this period (in ms), even if the batch size has not been reached yet
+                maxBatchSize = 50 // When the server is unreachable and log messages are being stored until it is reachable again, this is the maximum number of messages that will be stored. Cannot be smaller than batchSize
+            }
+        },
+    loggers = new List<Logger> { // Get the loggers to use the new appender
+            new Logger {
+                appenders = "appender1"
+            }
+        },
+    insertJsnlogInHtmlResponses = false, // There's an outstanding bug setting this to true so the workaround is using the jl-javascript-logger-definitions tag helper in _Layout.cshtml, via the reference in _ViewImports.cshtml
+    productionLibraryPath = null // We're using a fallback from the CDN with hashing, so do not use this
+};
+var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+app.UseJSNLog(new CustomLoggingAdapter(loggerFactory), jsnlogConfiguration);
 
 var componentSetup = new StarterProject.App.ComponentSetup(container);
 componentSetup.RegisterComponents();
 
 app.UseHttpsRedirection();
-
-// Configure JSNLog
-var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-app.UseJSNLog(new LoggingAdapter(loggerFactory));
-
-container.RegisterInstance(loggerFactory.CreateLogger(""));
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
 
 app.Services.UseSimpleInjector(container);
-
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
